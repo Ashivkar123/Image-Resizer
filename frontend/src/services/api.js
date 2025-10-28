@@ -1,5 +1,10 @@
 import axios from "axios";
 
-export default axios.create({
-  baseURL: "http://localhost:5000/api",
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL, // Uses the .env variable
+  headers: {
+    "Content-Type": "multipart/form-data",
+  },
 });
+
+export default api;

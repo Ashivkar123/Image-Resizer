@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import axios from "axios";
+import api from "../services/api.js";
 
 export default function ImageUpload() {
   const [files, setFiles] = useState([]);
@@ -197,10 +198,7 @@ export default function ImageUpload() {
 
     try {
       const toastId = toast.loading("Uploading...");
-      const res = await axios.post(
-        "http://localhost:5000/api/upload",
-        formData
-      );
+      const res = await api.post("/upload", formData); // ✅ uses api instance
       toast.dismiss(toastId);
       toast.success("Uploaded & resized!");
       setAfterImages(res.data.items);
