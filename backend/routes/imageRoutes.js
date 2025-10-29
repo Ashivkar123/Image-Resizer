@@ -29,11 +29,18 @@ router.post("/preview", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No image provided" });
 
-    const { width: w, height: h, lockAspect, quality, format } = req.body;
+    const {
+      width: w,
+      height: h,
+      lockAspect,
+      quality,
+      format,
+      targetSize,
+    } = req.body;
     const width = parseInt(w, 10) || null;
     const height = parseInt(h, 10) || null;
     const keepAspect = lockAspect === "true";
-    const q = parseInt(quality, 10) || 90;
+    let q = parseInt(quality, 10) || 90;
 
     const imgBuffer = fs.readFileSync(req.file.path);
     const meta = await sharp(imgBuffer).metadata();
@@ -43,6 +50,23 @@ router.post("/preview", upload.single("image"), async (req, res) => {
 
     if (keepAspect && targetW) {
       targetH = Math.round(targetW * (meta.height / meta.width));
+    }
+
+    // Adjust quality & dimensions based on targetSize
+    if (targetSize) {
+      const sizeMatch = targetSize.match(/^([\d.]+)\s*(KB|MB)?$/i);
+      if (sizeMatch) {
+        let sizeKB = parseFloat(sizeMatch[1]);
+        if ((sizeMatch[2] || "KB").toUpperCase() === "MB") sizeKB *= 1024;
+        const originalKB = Math.round(imgBuffer.length / 1024);
+        const scale = sizeKB / originalKB;
+        q = Math.min(Math.max(Math.floor(q * scale), 10), 100);
+        const scaleDim = Math.sqrt(scale);
+        targetW = Math.max(Math.floor(targetW * scaleDim), 50);
+        targetH = keepAspect
+          ? Math.max(Math.floor(targetW * (meta.height / meta.width)), 50)
+          : Math.max(Math.floor(targetH * scaleDim), 50);
+      }
     }
 
     let pipeline = sharp(imgBuffer).resize(targetW, targetH);
@@ -55,14 +79,14 @@ router.post("/preview", upload.single("image"), async (req, res) => {
     const buffer = await pipeline.toBuffer();
     const sizeKB = Math.round(buffer.length / 1024);
 
+    // Return as data URL for frontend preview
     res.json({
       width: targetW,
       height: targetH,
       sizeKB,
-      format: outFormat,
+      dataUrl: `data:image/${outFormat};base64,${buffer.toString("base64")}`,
     });
 
-    // Remove temp uploaded file
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
   } catch (err) {
     console.error(err);

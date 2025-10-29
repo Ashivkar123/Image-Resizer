@@ -4,24 +4,42 @@ import path from "path";
 import Image from "../models/Image.js";
 
 // -------------------- Upload & Resize Images --------------------
+// -------------------- Upload & Resize Images --------------------
 export const uploadImages = async (req, res) => {
   try {
     if (!req.files || req.files.length === 0)
       return res.status(400).json({ error: "No files uploaded" });
 
-    const { width: w, height: h, lockAspect, format, quality } = req.body;
+    const {
+      width: w,
+      height: h,
+      lockAspect,
+      format,
+      quality,
+      targetSize,
+    } = req.body;
     const width = parseInt(w, 10) || 500;
-    let height = parseInt(h, 10) || 500;
+    const height = parseInt(h, 10) || 500;
     const keepAspect = lockAspect === "true";
-    const results = [];
+    const defaultQuality = Number(quality) || 90;
+
+    let targetSizeKB = null;
+    if (targetSize) {
+      const match = targetSize.match(/^([\d.]+)\s*(KB|MB)?$/i);
+      if (match) {
+        targetSizeKB = parseFloat(match[1]);
+        if ((match[2] || "KB").toUpperCase() === "MB") targetSizeKB *= 1024;
+      }
+    }
 
     const UPLOAD_DIR = path.join(process.cwd(), "uploads");
     if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
 
+    const results = [];
+
     for (const file of req.files) {
       if (!file.mimetype.startsWith("image/")) continue;
 
-      // Get metadata
       const meta = await sharp(file.path).metadata();
       let targetW = width;
       let targetH = height;
@@ -38,26 +56,55 @@ export const uploadImages = async (req, res) => {
       )}.${outExt}`;
       const outPath = path.join(UPLOAD_DIR, outFilename);
 
-      let pipeline = sharp(file.path).resize(targetW, targetH).withMetadata();
+      let finalQuality = defaultQuality;
+      let buffer;
 
-      // Apply quality/compression
-      if (safeExt === "jpeg")
-        pipeline = pipeline.jpeg({
-          quality: Number(quality) || 95,
-          mozjpeg: true,
-        });
-      if (safeExt === "webp")
-        pipeline = pipeline.webp({ quality: Number(quality) || 95 });
-      if (safeExt === "png")
-        pipeline = pipeline.png({
-          compressionLevel: 9,
-          adaptiveFiltering: true,
-        });
+      // Adjust quality to reach target size if applicable
+      if (targetSizeKB && (safeExt === "jpeg" || safeExt === "webp")) {
+        let low = 10;
+        let high = 100;
+        let tries = 0;
+        const maxTries = 10;
 
-      await pipeline.toFile(outPath);
+        while (tries < maxTries) {
+          let pipeline = sharp(file.path)
+            .resize(targetW, targetH)
+            .withMetadata();
+          if (safeExt === "jpeg")
+            pipeline = pipeline.jpeg({ quality: finalQuality, mozjpeg: true });
+          if (safeExt === "webp")
+            pipeline = pipeline.webp({ quality: finalQuality });
+
+          buffer = await pipeline.toBuffer();
+          const sizeKB = buffer.length / 1024;
+
+          if (sizeKB <= targetSizeKB * 1.05 && sizeKB >= targetSizeKB * 0.95)
+            break;
+
+          if (sizeKB > targetSizeKB) high = finalQuality - 1;
+          else low = finalQuality + 1;
+
+          finalQuality = Math.floor((low + high) / 2);
+          tries++;
+        }
+
+        fs.writeFileSync(outPath, buffer);
+      } else {
+        let pipeline = sharp(file.path).resize(targetW, targetH).withMetadata();
+        if (safeExt === "jpeg")
+          pipeline = pipeline.jpeg({ quality: finalQuality, mozjpeg: true });
+        if (safeExt === "webp")
+          pipeline = pipeline.webp({ quality: finalQuality });
+        if (safeExt === "png")
+          pipeline = pipeline.png({
+            compressionLevel: 9,
+            adaptiveFiltering: true,
+          });
+
+        await pipeline.toFile(outPath);
+      }
 
       const stats = fs.statSync(outPath);
-
       const saved = new Image({
         originalName: file.originalname,
         filename: outFilename,
@@ -73,7 +120,6 @@ export const uploadImages = async (req, res) => {
       await saved.save();
       results.push(saved);
 
-      // Remove original temp file safely
       if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
     }
 

@@ -29,7 +29,7 @@ mongoose
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// Routes
+// Mount routes
 app.use("/api", imageRoutes);
 
 // Root
