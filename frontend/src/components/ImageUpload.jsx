@@ -156,7 +156,7 @@ export default function ImageUpload() {
         />
       </div>
 
-      <button onClick={handleUpload}>Upload & Resize</button>
+      <button onClick={handleUpload}>Resize</button>
 
       {previews.length > 0 && (
         <div className="after-preview-container">
