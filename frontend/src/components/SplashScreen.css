@@ -3,8 +3,8 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  height: 100vh;
+  width: 100vw;
   background: var(--bg-color);
   display: flex;
   flex-direction: column;
@@ -13,12 +13,16 @@
   z-index: 9999;
   overflow: hidden;
   opacity: 1;
-  transition: opacity 0.8s ease, background 0.5s ease;
+  transition: opacity 1s ease-in-out, transform 1s ease-in-out; /* ✅ smoother fade */
+  transform: scale(1);
+  backface-visibility: hidden;
+  will-change: opacity, transform;
 }
 
 /* Fade-out state */
 .splash-screen.fade-out {
   opacity: 0;
+  transform: scale(1.03); /* ✅ slight zoom-out during fade */
   pointer-events: none;
 }
 
@@ -38,6 +42,8 @@
     glowPulse 3s ease-in-out infinite alternate;
   z-index: 0;
   transition: background 0.5s ease;
+  will-change: transform, opacity;
+  transform-origin: center center;
 }
 
 /* Logo with subtle pulse */
@@ -46,10 +52,11 @@
   height: 120px;
   position: relative;
   z-index: 1;
-  animation: logoBounce 1.5s ease forwards,
+  animation: logoBounce 1.6s ease forwards,
     logoPulse 3s ease-in-out infinite alternate;
   filter: drop-shadow(0 0 25px var(--gradient-start));
   transition: filter 0.5s ease;
+  will-change: transform, filter;
 }
 
 /* App title - readable in all themes */
@@ -60,11 +67,12 @@
   color: var(--text-color);
   text-shadow: 0 0 15px var(--gradient-start);
   opacity: 0;
-  animation: titleFadeIn 1s ease 1s forwards;
+  animation: titleFadeIn 1.2s ease 1.2s forwards; /* ✅ perfectly timed with logo */
   position: relative;
   z-index: 1;
   text-align: center;
   transition: color 0.5s ease, text-shadow 0.5s ease;
+  will-change: opacity;
 }
 
 /* Animations */

@@ -15,35 +15,42 @@ if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
   filename: (req, file, cb) =>
-    cb(null, `${Date.now()}-${Math.round(Math.random() * 1e6)}${path.extname(file.originalname)}`)
+    cb(
+      null,
+      `${Date.now()}-${Math.round(Math.random() * 1e6)}${path.extname(
+        file.originalname
+      )}`
+    ),
 });
 const upload = multer({ storage });
 
-// imageRoutes.js (add this above your upload route)
-
+// -------------------- Preview Route --------------------
 router.post("/preview", upload.single("image"), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    if (!req.file) return res.status(400).json({ error: "No image provided" });
 
-    const { width, height, lockAspect, quality, format } = req.body;
-    const imgBuffer = req.file.buffer || fs.readFileSync(req.file.path);
+    const { width: w, height: h, lockAspect, quality, format } = req.body;
+    const width = parseInt(w, 10) || null;
+    const height = parseInt(h, 10) || null;
+    const keepAspect = lockAspect === "true";
+    const q = parseInt(quality, 10) || 90;
+
+    const imgBuffer = fs.readFileSync(req.file.path);
     const meta = await sharp(imgBuffer).metadata();
 
-    let targetW = Number(width) || meta.width;
-    let targetH = Number(height) || meta.height;
+    let targetW = width || meta.width;
+    let targetH = height || meta.height;
 
-    if (lockAspect === "true") {
+    if (keepAspect && targetW) {
       targetH = Math.round(targetW * (meta.height / meta.width));
     }
 
     let pipeline = sharp(imgBuffer).resize(targetW, targetH);
 
     const outFormat = (format || meta.format || "png").toLowerCase();
-    if (outFormat === "jpeg")
-      pipeline = pipeline.jpeg({ quality: Number(quality) || 90 });
+    if (outFormat === "jpeg") pipeline = pipeline.jpeg({ quality: q });
     if (outFormat === "png") pipeline = pipeline.png();
-    if (outFormat === "webp")
-      pipeline = pipeline.webp({ quality: Number(quality) || 90 });
+    if (outFormat === "webp") pipeline = pipeline.webp({ quality: q });
 
     const buffer = await pipeline.toBuffer();
     const sizeKB = Math.round(buffer.length / 1024);
@@ -54,6 +61,9 @@ router.post("/preview", upload.single("image"), async (req, res) => {
       sizeKB,
       format: outFormat,
     });
+
+    // Remove temp uploaded file
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -119,46 +129,6 @@ router.post("/download-zip", express.json(), (req, res) => {
   });
 
   archive.finalize();
-});
-
-// -------------------- Preview Route --------------------
-router.post("/preview", upload.single("image"), async (req, res) => {
-  try {
-    const { width: w, height: h, lockAspect, quality } = req.body;
-    const width = parseInt(w, 10) || null;
-    const height = parseInt(h, 10) || null;
-    const keepAspect = lockAspect === "true";
-    const q = parseInt(quality, 10) || 90;
-
-    if (!req.file) return res.status(400).json({ error: "No image provided" });
-
-    // Get original metadata
-    const meta = await sharp(req.file.buffer).metadata();
-    let targetW = width || meta.width;
-    let targetH = height || meta.height;
-
-    if (keepAspect && targetW) {
-      const ratio = meta.height / meta.width;
-      targetH = Math.round(targetW * ratio);
-    }
-
-    // Resize in memory
-    const buffer = await sharp(req.file.buffer)
-      .resize(targetW, targetH)
-      .jpeg({ quality: q })
-      .toBuffer();
-
-    const sizeKB = Math.round(buffer.length / 1024);
-
-    res.json({
-      width: targetW,
-      height: targetH,
-      sizeKB,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
 });
 
 export default router;

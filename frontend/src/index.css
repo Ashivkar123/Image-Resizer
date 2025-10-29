@@ -1,6 +1,3 @@
-/* ======================================
-   🌟 VARIABLES
-====================================== */
 :root {
   --primary: #6c5ce7;
   --primary-hover: #5b4ae1;
@@ -12,6 +9,9 @@
   --shadow: 0 8px 28px rgba(108, 92, 231, 0.15);
   --gradient: linear-gradient(135deg, #6c5ce7, #00b4d8);
   --gradient-start: rgba(108, 92, 231, 0.6);
+  --canvas-pulse-1: rgba(108, 92, 231, 0.06);
+  --canvas-pulse-2: rgba(0, 180, 216, 0.04);
+  --canvas-pulse-3: rgba(168, 85, 247, 0.025);
 }
 
 .dark-theme {
@@ -22,15 +22,15 @@
   --shadow: 0 0 25px rgba(112, 97, 255, 0.15);
   --gradient: linear-gradient(135deg, #9d4edd, #00b4d8, #3a0ca3);
   --gradient-start: rgba(157, 78, 221, 0.7);
+  --canvas-pulse-1: rgba(108, 92, 231, 0.06);
+  --canvas-pulse-2: rgba(0, 180, 216, 0.04);
+  --canvas-pulse-3: rgba(168, 85, 247, 0.025);
 }
 
-/* ======================================
-   🌍 BASE
-====================================== */
 *,
 *::before,
 *::after {
-  box-sizing: border-box; /* fix input overflow and consistent sizing */
+  box-sizing: border-box;
 }
 
 body {
@@ -43,9 +43,6 @@ body {
   transition: background 0.5s ease, color 0.5s ease;
 }
 
-/* ======================================
-   🏗️ LAYOUT
-====================================== */
 .app-container {
   display: flex;
   flex-direction: column;
@@ -56,9 +53,6 @@ body {
   animation: fadeIn 1s ease;
 }
 
-/* ======================================
-   🏷️ HEADER
-====================================== */
 header {
   max-width: 900px;
   text-align: center;
@@ -71,11 +65,13 @@ header {
 header h1 {
   font-size: 2.2rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #a855f7, #00b4d8, #4f46e5);
+  background: linear-gradient(90deg, #a855f7, #00b4d8, #4f46e5, #9d4edd);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   letter-spacing: 0.6px;
   margin: 0;
+  background-size: 300% 300%;
+  animation: gradientFlow 7s linear infinite;
 }
 
 header p {
@@ -83,9 +79,6 @@ header p {
   margin: 0.3rem 0 1rem 0;
 }
 
-/* ======================================
-   🌙 THEME TOGGLE BUTTON
-====================================== */
 .theme-toggle {
   position: fixed;
   top: 20px;
@@ -104,7 +97,7 @@ header p {
   justify-content: center;
   font-size: 1.3rem;
   color: #fff;
-  animation: fadeIn 1s ease;
+  animation: glowPulse 3s infinite ease-in-out;
 }
 
 .theme-toggle::after {
@@ -128,7 +121,6 @@ body.dark-theme .theme-toggle::after {
   box-shadow: 0 0 15px rgba(108, 92, 231, 0.3);
 }
 
-/* Glowing pulse effect */
 @keyframes glowPulse {
   0% {
     box-shadow: 0 0 5px rgba(108, 92, 231, 0.5);
@@ -141,13 +133,6 @@ body.dark-theme .theme-toggle::after {
   }
 }
 
-.theme-toggle {
-  animation: glowPulse 3s infinite ease-in-out;
-}
-
-/* ======================================
-   📤 UPLOAD AREA
-====================================== */
 .upload-container,
 .card {
   background: var(--card-bg);
@@ -162,13 +147,8 @@ body.dark-theme .theme-toggle::after {
   transition: all 0.3s ease;
 }
 
-/* ======================================
-   📁 FILE INPUT FIXED
-====================================== */
 input[type="file"] {
   width: 100%;
-  max-width: 100%;
-  box-sizing: border-box; /* include padding and border */
   padding: 1.2rem;
   border: 2px dashed var(--primary);
   border-radius: 14px;
@@ -185,13 +165,12 @@ input[type="file"]:hover {
   background: rgba(108, 92, 231, 0.1);
 }
 
-/* ======================================
-   🎚️ SLIDERS
-====================================== */
 .sliders {
   display: flex;
   flex-direction: column;
   gap: 1.4rem;
+  margin-bottom: 10px;
+  margin-top: 8px;
 }
 
 input[type="range"] {
@@ -202,7 +181,12 @@ input[type="range"] {
   appearance: none;
   outline: none;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s ease, background-position 0.6s ease;
+  background-size: 200% 100%;
+}
+
+input[type="range"]:active {
+  box-shadow: 0 6px 20px rgba(108, 92, 231, 0.12);
 }
 
 input[type="range"]::-webkit-slider-thumb {
@@ -220,22 +204,25 @@ input[type="range"]::-webkit-slider-thumb:hover {
   box-shadow: 0 0 25px rgba(108, 92, 231, 0.7);
 }
 
-/* ======================================
-   🧭 BUTTONS
-====================================== */
 .upload-btn,
 button,
 .download-btn {
-  background: var(--gradient);
+  background: linear-gradient(270deg, #6c5ce7, #00b4d8, #a855f7);
+  background-size: 300% 300%;
+  animation: buttonGradientFlow 5s ease infinite;
   color: #fff;
   border: none;
   border-radius: 14px;
+  margin-top: 20px;
   padding: 0.9rem 1.6rem;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 8px 20px rgba(108, 92, 231, 0.3);
-  transition: all 0.35s ease;
+  transition: all 0.4s ease;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: transform, box-shadow, background-position;
 }
 
 .upload-btn:hover,
@@ -245,10 +232,18 @@ button:hover,
   box-shadow: 0 12px 26px rgba(108, 92, 231, 0.4);
 }
 
-/* ======================================
-   🖼️ IMAGE PREVIEW + HOVER EFFECTS
-====================================== */
-.preview-container,
+@keyframes buttonGradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 .after-preview-container {
   display: flex;
   justify-content: center;
@@ -279,8 +274,8 @@ button:hover,
   opacity: 0.5;
 }
 
-.preview-card,
-.after-preview-card {
+.after-preview-card,
+.preview-card {
   position: relative;
   overflow: hidden;
   background: var(--card-bg);
@@ -292,15 +287,18 @@ button:hover,
   transition: transform 0.4s ease, box-shadow 0.4s ease;
 }
 
-.preview-card img,
-.after-preview-card img {
+.after-preview-card img,
+.preview-card img {
   width: 100%;
   border-radius: 12px;
-  transition: transform 0.6s ease, filter 0.5s ease;
+  transition: width 0.45s ease-in-out, height 0.45s ease-in-out,
+    transform 0.45s ease-in-out, opacity 0.45s ease-in-out,
+    filter 0.45s ease-in-out;
+  will-change: width, height, transform, opacity, filter;
 }
 
-.preview-card::before,
-.after-preview-card::before {
+.after-preview-card::before,
+.preview-card::before {
   content: "";
   position: absolute;
   top: 0;
@@ -316,85 +314,87 @@ button:hover,
   transition: left 0.8s ease;
 }
 
-.preview-card:hover::before,
-.after-preview-card:hover::before {
+.after-preview-card:hover::before,
+.preview-card:hover::before {
   left: 120%;
 }
 
-.preview-card:hover img,
-.after-preview-card:hover img {
+.after-preview-card:hover img,
+.preview-card:hover img {
   transform: scale(1.08);
   filter: brightness(1.15) drop-shadow(0 0 15px rgba(108, 92, 231, 0.6));
 }
 
-.preview-card:hover,
-.after-preview-card:hover {
+.after-preview-card:hover,
+.preview-card:hover {
   transform: translateY(-8px) scale(1.02);
   box-shadow: 0 12px 35px rgba(108, 92, 231, 0.5);
 }
 
-.preview-card:active,
-.after-preview-card:active {
+.after-preview-card:active,
+.preview-card:active {
   transform: scale(0.97);
   filter: brightness(0.95);
 }
 
-/* ======================================
-   📂 DOWNLOAD AREA
-====================================== */
-.image-info {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  font-size: 0.9rem;
-  opacity: 0.85;
+.after-preview-card::after,
+.preview-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(
+      600px 300px at 10% 20%,
+      var(--canvas-pulse-1),
+      transparent 20%
+    ),
+    radial-gradient(
+      500px 200px at 90% 80%,
+      var(--canvas-pulse-2),
+      transparent 30%
+    ),
+    linear-gradient(180deg, transparent 30%, rgba(255, 255, 255, 0.02) 100%);
+  opacity: 0.95;
+  mix-blend-mode: overlay;
+  transition: opacity 0.6s ease, transform 0.6s ease;
 }
 
-.rename-section {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  margin-top: 1rem;
+.after-preview-card:hover::after,
+.preview-card:hover::after {
+  opacity: 1;
+  transform: scale(1.01);
 }
 
-.file-name-input {
-  flex: 1;
-  min-width: 160px;
-  padding: 0.6rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--card-bg);
-  color: var(--text-color);
-  text-align: center;
-  transition: border-color 0.3s ease;
+.preview-card.resizing,
+.after-preview-card.resizing,
+.image-container.resizing {
+  animation: resizePulse 0.7s ease;
 }
 
-.file-name-input:focus {
-  border-color: var(--primary);
-  outline: none;
-  box-shadow: 0 0 10px rgba(108, 92, 231, 0.3);
+.preview-card.resizing img,
+.after-preview-card.resizing img,
+.image-container.resizing img {
+  transition: all 0.2s linear;
+  filter: brightness(1.03);
+  transform: scale(1.02);
 }
 
-.file-format-select {
-  padding: 0.6rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--card-bg);
-  color: var(--text-color);
-  cursor: pointer;
-  font-weight: 500;
-  transition: border-color 0.3s ease;
+@keyframes resizePulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 8px 28px rgba(108, 92, 231, 0.12);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 12px 36px rgba(108, 92, 231, 0.16);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 8px 28px rgba(108, 92, 231, 0.12);
+  }
 }
 
-.file-format-select:hover {
-  border-color: var(--primary);
-}
-
-/* ======================================
-   🌟 ANIMATIONS
-====================================== */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -415,9 +415,18 @@ button:hover,
   }
 }
 
-/* ======================================
-   📱 RESPONSIVE
-====================================== */
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 @media (max-width: 768px) {
   .before-after-row {
     flex-direction: column;
@@ -431,4 +440,127 @@ button:hover,
   .download-btn {
     width: 100%;
   }
+}
+
+@media (max-width: 480px) {
+  .theme-toggle {
+    top: 12px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+    font-size: 1.05rem;
+  }
+  header h1 {
+    font-size: 1.8rem;
+    padding-top: 2.6rem;
+  }
+  header p {
+    font-size: 0.95rem;
+  }
+}
+
+label[for="lockAspectRatio"],
+input[type="checkbox"] {
+  display: inline-block;
+  margin-bottom: 0;
+}
+
+.lock-aspect-ratio-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.image-info {
+  text-align: center;
+  margin-top: 10px;
+  transition: all 0.4s ease;
+}
+
+.image-info span {
+  font-weight: 500;
+  color: var(--text-color);
+  transition: all 0.4s ease;
+  display: inline-block;
+}
+
+.preview-card:hover ~ .image-info span,
+.after-preview-card:hover ~ .image-info span {
+  background: linear-gradient(90deg, #6c5ce7, #00b4d8, #a855f7, #4f46e5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+  text-shadow: 0 0 14px rgba(108, 92, 231, 0.55);
+  transform: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* === Added for rename section and download button styling === */
+.rename-section {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 0.8rem;
+  width: 100%;
+}
+
+.rename-section input[type="text"] {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.5rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text-color);
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.rename-section input[type="text"]:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 10px rgba(108, 92, 231, 0.3);
+}
+
+.rename-section select {
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text-color);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.rename-section select:hover {
+  border-color: var(--primary);
+}
+
+.rename-section a {
+  display: inline-block;
+  text-decoration: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  background: linear-gradient(270deg, #6c5ce7, #00b4d8, #a855f7);
+  background-size: 300% 300%;
+  animation: buttonGradientFlow 5s ease infinite;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(108, 92, 231, 0.3);
+  transition: all 0.4s ease;
+}
+
+.rename-section a:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 26px rgba(108, 92, 231, 0.4);
 }
